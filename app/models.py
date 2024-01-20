@@ -11,3 +11,36 @@ class MyUser(AbstractUser):
     
     phone_number = models.CharField(max_length=100, null=True, blank=True)
     # role = models.CharField(max_length=100, null=True, blank=True, choice=)
+    
+class Theme(models.Model):
+    name = models.CharField(max_length=100, verbose_name=_("Theme name"), null=False)
+    description = models.CharField(max_length=200, blank=True, null=True)
+    
+    def __str__(self) -> str:
+        return self.name
+    
+class Question(models.Model):
+    class LevelType(models.TextChoices):
+        EASY = "easy", _("easy level")
+        AVERAGE = "average", _("average level")
+        DIFFICULT = "difficult", _("difficult level")
+        
+    content = models.CharField(max_length=100, null=False, blank=False)
+    theme = models.ForeignKey("Theme", on_delete=models.DO_NOTHING, related_name="questions", related_query_name="question")
+    point = models.IntegerField()
+    level = models.CharField(max_length=100, null=False, choices=LevelType.choices, default=LevelType.EASY)
+    
+    def __str__(self) -> str:
+        return self.content
+    
+
+class QuestionResponse(models.Model):
+    content = models.CharField(max_length=100, null=False, blank=False)
+    question = models.ForeignKey("Question", on_delete=models.DO_NOTHING, related_name="responses", related_query_name="response")
+    is_correct = models.BooleanField()
+    
+    
+class Score(models.Model):
+    theme = models.ForeignKey("Theme", on_delete=models.DO_NOTHING, null=False, related_name="theme_scores")
+    user = models.ForeignKey("MyUser", on_delete=models.DO_NOTHING, related_name="scores")
+    status = models.CharField(max_length=100, null=True, blank=True)
