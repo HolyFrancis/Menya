@@ -27,7 +27,7 @@ class Question(models.Model):
         
     content = models.CharField(max_length=100, null=False, blank=False)
     theme = models.ForeignKey("Theme", on_delete=models.DO_NOTHING, related_name="questions", related_query_name="question")
-    point = models.IntegerField()
+    point = models.IntegerField(default=0)
     level = models.CharField(max_length=100, null=False, choices=LevelType.choices, default=LevelType.EASY)
     
     def __str__(self) -> str:
@@ -39,8 +39,33 @@ class QuestionResponse(models.Model):
     question = models.ForeignKey("Question", on_delete=models.DO_NOTHING, related_name="responses", related_query_name="response")
     is_correct = models.BooleanField()
     
+
+class UserQuestionResponse(models.Model):
+    user = models.ForeignKey("MyUser", on_delete=models.DO_NOTHING, related_name="users_response")
+    theme = models.ForeignKey("Theme", on_delete=models.DO_NOTHING, null=False, related_name="user_theme_scores")
+    question_response = models.ForeignKey("QuestionResponse", on_delete=models.DO_NOTHING)
     
-class Score(models.Model):
-    theme = models.ForeignKey("Theme", on_delete=models.DO_NOTHING, null=False, related_name="theme_scores")
-    user = models.ForeignKey("MyUser", on_delete=models.DO_NOTHING, related_name="scores")
-    status = models.CharField(max_length=100, null=True, blank=True)
+    @property
+    def theme_score(self):
+        score = 0
+        theme_questions = self.theme.questions.all()
+        
+        for theme_question in theme_questions:
+            theme_question_responses = theme_question.responses.filter(is_correct=True)
+            score += sum(theme_question for theme_question_response in theme_question_responses)
+                    
+        return score
+    
+# class UsersScore(models.Model):
+#     theme = models.ForeignKey("Theme", on_delete=models.DO_NOTHING, null=False, related_name="theme_scores")
+#     user = models.ForeignKey("MyUser", on_delete=models.DO_NOTHING, related_name="scores")
+#     status = models.CharField(max_length=100, null=True, blank=True)
+   
+    
+    
+                    
+
+            
+    
+        
+        
