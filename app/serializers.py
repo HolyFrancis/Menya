@@ -1,4 +1,6 @@
+from django.contrib.auth import authenticate
 from rest_framework import serializers
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from app.models import *
 
@@ -29,6 +31,34 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         
         return user
     
+
+class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
+    username = serializers.CharField(max_length=100, read_only=True)
+    password = serializers.CharField(max_length=100, read_only=True)
+    
+    def validate(self, data):
+        username = data.get("username")
+        password = data.get("password")
+        
+        if username is None:
+            return serializers.ValidationError("username is required to log in")
+        elif password is None:
+            return serializers.ValidationError("the password is required")
+        else:
+            user = authenticate(username=username, password=password)
+            
+        return self.get_token(user)
+    
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+
+        # Add custom claims
+        # token['username'] = user.username
+        # token['email'] = user.email
+        # # ...
+
+        return token
     
 class ThemeSerializer(serializers.ModelSerializer):
     class Meta:
@@ -40,7 +70,12 @@ class QuestionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Question
         fields = '__all__'
-    
+
+
+class QuestionListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Question
+        fields = ["content", "theme"]
 
 class QuestionResponseSerializer(serializers.ModelSerializer):
     class Meta:
