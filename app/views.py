@@ -104,3 +104,22 @@ class QuestionViewset(GenericViewSet,
         if self.action in ['create', 'update']:
             return self.serializer_class
         return QuestionListSerializer
+    
+
+class QuestionResponsesViewset(
+    GenericViewSet, 
+    drf_mixins.CreateModelMixin,
+    drf_mixins.ListModelMixin,
+    drf_mixins.UpdateModelMixin,
+):
+    permission_classes = [AllowAny]
+    serializer_class = QuestionResponsesSerializer
+    queryset = QuestionResponse.objects.all()
+    authentication_classes  = [TokenAuthentication]
+    
+    def get_queryset(self):
+        question = self.request.query_params.get("question")
+        if question:
+            queryset = self.queryset.filter(question=question)
+            return queryset
+        return self.queryset

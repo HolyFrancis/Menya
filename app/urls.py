@@ -8,6 +8,7 @@ from app.views import *
 router = routers.SimpleRouter()
 
 router.register(r"question", QuestionViewset)
+router.register(r"question_responses", QuestionResponsesViewset)
 
 
 urlpatterns =  router.urls + [

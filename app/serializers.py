@@ -77,7 +77,7 @@ class QuestionListSerializer(serializers.ModelSerializer):
         model = Question
         fields = ["content", "theme"]
 
-class QuestionResponseSerializer(serializers.ModelSerializer):
+class QuestionResponsesSerializer(serializers.ModelSerializer):
     class Meta:
         model = QuestionResponse
         fields = '__all__'
