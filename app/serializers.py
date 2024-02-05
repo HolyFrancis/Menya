@@ -36,40 +36,58 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     username = serializers.CharField(max_length=100, read_only=True)
     password = serializers.CharField(max_length=100, read_only=True)
     
-    def validate(self, data):
-        username = data.get("username")
-        password = data.get("password")
+    # def validate(self, attrs, data):
+    #     username = data.get("username")
+    #     password = data.get("password")
         
-        if username is None:
-            return serializers.ValidationError("username is required to log in")
-        elif password is None:
-            return serializers.ValidationError("the password is required")
-        else:
-            user = authenticate(username=username, password=password)
+    #     data = super().validate(attrs)
+    #     if username is None:
+    #         return serializers.ValidationError("username is required to log in")
+    #     elif password is None:
+    #         return serializers.ValidationError("the password is required")
+    #     else:
+    #         user = authenticate(username=username, password=password)
             
-        return self.get_token(user)
+    #     return self.get_token(user)
+    
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        refresh = self.get_token(self.user)
+        data['refresh'] = str(refresh)
+        data['access'] = str(refresh.access_token)
+
+        # Add custom data to response
+        data['user'] = {
+            'id': self.user.id,
+            'username': self.user.username,
+            'email': self.user.email,
+            # Add any other user-related data you want to include
+        }
+
+        return data
     
     @classmethod
     def get_token(cls, user):
         token = super().get_token(user)
 
         # Add custom claims
-        # token['username'] = user.username
+        token['username'] = user.username
         # token['email'] = user.email
-        # # ...
+        token['user_id'] = user.id
+        # ...
 
         return token
     
 class ThemeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Theme
-        fields = '__all__'
+        fields = ["id", "name", "description"]
 
 
 class QuestionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Question
-        fields = '__all__'
+        fields = ["id", "content", "theme", "point", "level"]
 
 
 class QuestionListSerializer(serializers.ModelSerializer):
@@ -80,16 +98,22 @@ class QuestionListSerializer(serializers.ModelSerializer):
 class QuestionResponsesSerializer(serializers.ModelSerializer):
     class Meta:
         model = QuestionResponse
-        fields = '__all__'
+        fields = ["id", "content", "theme","question", "is_correct"]
         
 class UserQuestionResponseSerializer(serializers.ModelSerializer):
     user_score = serializers.SerializerMethodField(read_only=True)
     class Meta:
         model = UserQuestionResponse
-        fields = ['user', 'theme', 'question_response', 'user_score']
+        fields = ['id', 'theme', 'question', 'question_response', 'user_score']
         
     def get_user_score(self, obj):
         if obj.theme_score:
             user_score = obj.theme_score
             
             return user_score
+        
+class UserQuestionResponseCreateSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = UserQuestionResponse
+        fields = ['id', 'theme', 'question_response',]
