@@ -10,8 +10,6 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework import mixins as drf_mixins
 from rest_framework.authentication import BasicAuthentication, TokenAuthentication
 
-
-
 from app.serializers import *
 
 # Create your views here.
@@ -34,19 +32,23 @@ class UserRegisterAPIView(APIView):
 class UserLoginAPIView(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer
     
+    
     def post(self, request, *args, **kwargs):
         response = super().post(request, *args, **kwargs)
         
         user = request.user
         
         token = self.serializer_class.get_token(user)
+        print(f"\n\n\n\n{user}\n\n\n")
         response.data = {
             "user": UserSerializer(user, context=self.get_serializer_context()).data,
-            "token": str(token),
+            "access": str(token.access_token),
+            "refresh": str(token),
         }
         
         return response
-  
+
+
     
 class ThemeListAPIView(ListAPIView):
     serializer_class = ThemeSerializer
@@ -123,3 +125,45 @@ class QuestionResponsesViewset(
             queryset = self.queryset.filter(question=question)
             return queryset
         return self.queryset
+
+class UserQuestionResponseViewset(GenericViewSet,drf_mixins.CreateModelMixin,
+    drf_mixins.ListModelMixin,
+    drf_mixins.UpdateModelMixin,
+):
+    permission_classes = [AllowAny]
+    queryset = UserQuestionResponse.objects.all()
+    serializer_class = UserQuestionResponseSerializer
+    
+
+
+# class UserQuestionResponseCreateAPIView(CreateAPIView):
+#     serializer_class = UserQuestionResponseCreateSerializer
+    
+#     permission_classes = [AllowAny]
+    
+   
+    
+#     def perform_create(self, serializer):
+#         serializer.save(user=self.request.user)
+        
+#     def create(self, request, *args, **kwargs):
+#         # Check if the user has already submitted a response for this question
+#         user_profile = self.request.user
+#         print(f"\n\n\n\n\n{user_profile}\n\n\n\n")
+#         if not self.request.user.is_authenticated:
+#             return Response ({"detail": "User not authenticated."}, status=status.HTTP_401_UNAUTHORIZED)
+#         question_id = self.request.data.get('question_response')
+#         theme = self.request.data.get('theme')
+        
+#         if question_id is None or theme is None:
+#             return Response ({"detail": 'you have to include theme and question_response'})
+        
+#         if UserQuestionResponse.objects.filter(user=user_profile, question_response=question_id, theme=theme).exists():
+#             return Response({'detail': 'You have already submitted a response for this question.'}, status=status.HTTP_400_BAD_REQUEST)
+
+#         return super().create(request, *args, **kwargs)
+
+    
+class UserQuestionResponseListAPIView(ListAPIView):
+    serializer_class = UserQuestionResponseSerializer
+    queryset = UserQuestionResponse.objects.all()
